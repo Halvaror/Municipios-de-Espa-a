@@ -31,9 +31,10 @@ datos <- read_excel("DatosImpuestos_Tarea.xlsx")
 
 datos <- datos[,-c(3,4,5,8)]
 
+length(datos)
 str(datos)
 
-#datos[,c(2,4,8,9,27,28)] <- lapply(datos[,c(2,4,8,9,27,28)], factor)
+datos[,c(1, 2, 23, 24)] <- lapply(datos[,c(1, 2, 23, 24)], factor)
 summary(datos)
 
 #sapply(Filter(is.numeric, datos),function(x) length(unique(x)))
@@ -101,14 +102,18 @@ input[,as.vector(which(sapply(input, class)=="character"))] <- lapply(input[,as.
 summary(input)
 
 
+# Elimino variables correladas para que el modelo funcione mejor
+
+input <- input[,-c(7,10, 17:20)]
+
 #Obtengo la importancia de las variables. Falla si hay alguna variable cuantitativa con menos de 6 valores diferentes
-#graficoVcramer(input,varObjBin)
-#graficoVcramer(input,varObjCont)
+graficoVcramer(input,varObjBin)
+graficoVcramer(input,varObjCont)
 
 
 #Todas las variables num?ricas frente a la objetivo continua
-#graficoCorrelacion(varObjCont,input) #Nos fijamos en la forma de las l?neas rojas (si hay muchas variables num?ricas, tarda un poco)
-#corrplot(cor(cbind(varObjCont,Filter(is.numeric, input)), use="pairwise", method="pearson"), method = "ellipse",type = "upper")
+graficoCorrelacion(varObjCont,input) #Nos fijamos en la forma de las l?neas rojas (si hay muchas variables num?ricas, tarda un poco)
+corrplot(cor(cbind(varObjCont,Filter(is.numeric, input)), use="pairwise", method="pearson"), method = "ellipse",type = "upper")
 
 #Busco las mejores transformaciones para las variables num?ricas con respesto a los dos tipos de variables
 input_cont<-cbind(input,Transf_Auto(Filter(is.numeric, input),varObjCont))
@@ -136,7 +141,7 @@ Rsq(modelo1,"varObjCont",data_test) #En test hay bastante diferencia, segurament
 
 graficoVcramer(todo,varObjCont) #Pruebo con las m?s importantes
 
-modelo2<-lm(varObjCont~Distrito+CCAA+Vivienda+Salario_2+Salario_4+Salario_1,data=data_train)
+modelo2<-lm(varObjCont~Distrito+CCAA+Vivienda+Vivienda+Salario_2++Salario_1,data=data_train)
 modelEffectSizes(modelo2)
 summary(modelo2)
 Rsq(modelo2,"varObjCont",data_train)
@@ -237,7 +242,8 @@ Rsq(modeloStepBIC,"varObjCont",data_test)
 Rsq(modeloStepAIC,"varObjCont",data_test)
 
 #Genero interacciones
-formInt<-formulaInteracciones(datos[,c(1:23,45)],24)#en el subconjunto de las vbles. originales, la objetivo est? en la columna 25
+length(datos)
+formInt<-formulaInteracciones(datos[,c(1:18,33)],19)#en el subconjunto de las vbles. originales, la objetivo est? en la columna 25
 fullInt<-lm(formInt, data=data_train) #Modelo con todas las variables y todas las interacciones
 
 modeloStepAIC_int<-step(null, scope=list(lower=null, upper=fullInt), direction="both")
@@ -269,7 +275,7 @@ modeloStepBIC_trans$rank
 #No est? claro cu?l es preferible.
 
 #Trans e interacciones
-formIntT<-formulaInteracciones(datos,45)
+formIntT<-formulaInteracciones(datos,33)
 fullIntT<-lm(formIntT, data=data_train)
 
 modeloStepAIC_transInt<-step(null, scope=list(lower=null, upper=fullIntT), direction="both")
